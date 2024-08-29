@@ -1,0 +1,60 @@
+[package]
+name = "injex_aggregator_staking"
+version = "0.1.0"
+authors = ["m000nler <oleksii.rychko@redduck.io>"]
+edition = "2021"
+
+exclude = [
+  # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
+  "injex_aggregator_staking.wasm",
+  "hash.txt",
+]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[profile.release]
+opt-level = 3
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+codegen-units = 1
+panic = 'abort'
+incremental = false
+overflow-checks = true
+
+[features]
+# use library feature to disable all instantiate/execute/query exports
+library = []
+
+# carto run-script <script>
+[package.metadata.scripts]
+build = """cargo wasm && cargo schema"""
+optimize = """docker run --rm -v "$(pwd)":/code \
+  --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
+  --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+  cosmwasm/rust-optimizer:0.12.12
+"""
+
+[dependencies]
+cosmwasm-schema = "2.0.1"
+cosmwasm-std = { version = "1.5.5", features = [
+  "cosmwasm_1_3",
+  # Enable this if you only deploy to chains that have CosmWasm 1.4 or higher
+  # "cosmwasm_1_4",
+] }
+bnum = { version = "0.10.0" } # enables the "rand" feature
+cw-storage-plus = "1.2.0"
+cw2 = "1.1.2"
+anyhow = "1.0"
+schemars = "0.8.16"
+serde = { version = "1.0.197", default-features = false, features = ["derive"] }
+thiserror = { version = "1.0.58" }
+cw20 = "1.1.2"
+
+
+[dev-dependencies]
+cw-multi-test = "1.1.0"
